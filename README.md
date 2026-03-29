@@ -23,3 +23,11 @@ The project follows a complete AI pipeline:
 5. Real-time prediction using Python  
 6. Communication with ROS nodes  
 7. Execution of actions in Unity simulation (Niryo One robot)
+
+## Key Features
+
+- Real-time EMG signal processing  
+- LSTM-based gesture recognition  
+- Integration with ROS for robotic control  
+- Unity simulation of Niryo One robot  
+- End-to-end pipeline from signal to action  
