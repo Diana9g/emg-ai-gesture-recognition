@@ -1,1 +1,11 @@
+# Unity Simulation
 
+Unity was used to simulate the Niryo One robot and visualize movements based on EMG gesture recognition.
+
+Features:
+- Real-time visualization of robot actions
+- Integration with external AI system via ROS
+- Testing environment for gesture-based control
+
+Version:
+- Unity Hub 3.12.1
