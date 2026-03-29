@@ -14,7 +14,6 @@ This project uses ROS 1 Noetic as a communication layer between the AI system an
 - `/recognized_gesture` (std_msgs/Int32)
 
 This topic is used to send predicted gestures from the AI system to the Unity environment.
-
 ## External ROS Packages Used
 
 - `ros_tcp_endpoint` – communication between Unity and ROS  
