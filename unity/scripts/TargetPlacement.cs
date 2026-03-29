@@ -12,7 +12,8 @@ namespace Unity.Robotics.PickAndPlace
     {
         const string k_NameExpectedTarget = "Target";
         static readonly int k_ShaderColorId = Shader.PropertyToID("_Color");
-        // The threshold that the Target's speed must be under to be considered "placed" in the target area
+        
+        // Maximum speed threshold below which the target is considered "placed"
         const float k_MaximumSpeedForStopped = 0.01f;
 
         [SerializeField]
@@ -48,16 +49,17 @@ namespace Unity.Robotics.PickAndPlace
             InsidePlaced
         }
 
-        // Start is called before the first frame update
+        // Called before the first frame update
         void Start()
         {
-            // Check for mis-configurations and disable if something has changed without this script being updated
-            // These are warnings because this script does not contain critical functionality
+        
+            // Try to automatically find the target if not assigned
             if (m_Target == null)
             {
                 m_Target = GameObject.Find(k_NameExpectedTarget);
             }
-
+            
+            // Disable script if target cannot be found
             if (m_Target == null)
             {
                 Debug.LogWarning($"{nameof(TargetPlacement)} expects to find a GameObject named " +
@@ -65,7 +67,8 @@ namespace Unity.Robotics.PickAndPlace
                 enabled = false;
                 return;
             }
-
+            
+            // Validate required components
             if (!TrySetComponentReferences())
             {
                 enabled = false;
@@ -84,7 +87,7 @@ namespace Unity.Robotics.PickAndPlace
                 return false;
             }
 
-            // Assume these are here because they are RequiredComponent components
+            // Required components (guaranteed by RequireComponent)
             m_MeshRenderer = GetComponent<MeshRenderer>();
             m_BoxCollider = GetComponent<BoxCollider>();
             return true;
@@ -92,8 +95,9 @@ namespace Unity.Robotics.PickAndPlace
 
         void OnValidate()
         {
-            // Useful for visualizing state in editor, but doesn't wholly guarantee accurate coloring in EditMode
-            // Enter PlayMode to see color update correctly
+        
+            // Helps visualize state changes in the Unity Editor
+            // For accurate behavior, use Play Mode
             if (m_Target != null)
             {
                 if (TrySetComponentReferences())
@@ -140,7 +144,7 @@ namespace Unity.Robotics.PickAndPlace
             return targetIsStopped && targetIsInBounds;
         }
 
-        // Update is called once per frame
+        // Called once per frame to update placement state
         void Update()
         {
             if (CurrentState != PlacementState.Outside)
