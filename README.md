@@ -1,20 +1,14 @@
-# emg-ai-gesture-recognition
-EMG-based gesture recognition project using Python, TensorFlow, ROS, and Unity for real-time AI-driven control.
+# EMG Gesture Recognition for Robotic Control
 
-## Technologies Used
+This project presents an end-to-end system for controlling a robotic arm using electromyography (EMG) signals and artificial intelligence.
 
-- **Unity Hub 3.12.1** – Simulation of the Niryo One robot and visualization of movements  
-- **ROS 1 Noetic** – Communication between nodes and implementation of EMG-based control node  
-- **Python 3.10** – Main language for EMG signal processing, model training, and ROS integration  
-- **TensorFlow / Keras 2.8.0** – Training and inference of LSTM model for EMG classification  
-- **NumPy 1.22.3** – Numerical operations and array processing  
-- **pandas 1.4.2** – Handling CSV datasets and tabular data  
-- **scikit-learn 1.1.0** – Train/test split and evaluation metrics  
-- **matplotlib 3.5.1** – Visualization of training results (accuracy, loss)
+The system processes EMG data, classifies hand gestures using a deep learning model, and integrates the results into a robotic simulation environment using ROS and Unity.
 
-## System Architecture
+---
 
-The project follows a complete AI pipeline:
+## Project Overview
+
+The project implements a complete AI pipeline for real-time gesture recognition and robotic control:
 
 1. EMG signal acquisition  
 2. Signal preprocessing and normalization  
@@ -24,19 +18,61 @@ The project follows a complete AI pipeline:
 6. Communication with ROS nodes  
 7. Execution of actions in Unity simulation (Niryo One robot)
 
+---
+
+## Technologies Used
+
+- **Unity Hub 3.12.1** – Simulation of the Niryo One robot and visualization of movements  
+- **ROS 1 Noetic** – Communication between nodes and EMG-based control  
+- **Python 3.10** – EMG signal processing, model training, and integration  
+- **TensorFlow / Keras 2.8.0** – LSTM model for gesture classification  
+- **NumPy 1.22.3** – Numerical computations and array handling  
+- **pandas 1.4.2** – Data handling and dataset processing  
+- **scikit-learn 1.1.0** – Data splitting and evaluation  
+- **matplotlib 3.5.1** – Visualization of training results  
+
+---
+
+## System Architecture
+
+The system connects machine learning with robotic simulation through ROS:
+
+- Python processes EMG signals and performs classification  
+- The trained model predicts gestures in real time  
+- Predictions are published via ROS (`/recognized_gesture`)  
+- Unity subscribes to the topic and triggers robot actions  
+- The Niryo One robot executes movements (e.g. pick-and-place)
+
+---
+
 ## Key Features
 
 - Real-time EMG signal processing  
-- LSTM-based gesture recognition  
-- Integration with ROS for robotic control  
-- Unity simulation of Niryo One robot  
-- End-to-end pipeline from signal to action
+- Deep learning-based gesture recognition (LSTM)  
+- ROS-based communication between components  
+- Unity robotic simulation  
+- End-to-end pipeline from biosignal to robot action  
 
-  ## Repository Structure
+---
 
-- `src/` – training and ML scripts
-- `data/` – sample EMG dataset
-- `models/` – trained model notes or files
-- `ros/` – ROS integration notes
-- `unity/` – Unity simulation scripts
-- `docs/` – project overview and technical documentation
+## Repository Structure
+
+- `src/` – Python scripts for training and inference  
+- `data/` – EMG dataset (sample or structured)  
+- `models/` – trained models (`.h5`, `.keras`)  
+- `ros/` – ROS integration documentation  
+- `unity/` – Unity simulation scripts  
+- `docs/` – additional project documentation  
+
+---
+
+## Notes
+
+- Some datasets may not be fully included due to size limitations  
+- External ROS packages (MoveIt, Niryo) are required for full functionality  
+
+---
+
+## License
+
+This project is licensed under the MIT License.
