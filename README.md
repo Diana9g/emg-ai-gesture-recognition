@@ -30,4 +30,13 @@ The project follows a complete AI pipeline:
 - LSTM-based gesture recognition  
 - Integration with ROS for robotic control  
 - Unity simulation of Niryo One robot  
-- End-to-end pipeline from signal to action  
+- End-to-end pipeline from signal to action
+
+  ## Repository Structure
+
+- `src/` – training and ML scripts
+- `data/` – sample EMG dataset
+- `models/` – trained model notes or files
+- `ros/` – ROS integration notes
+- `unity/` – Unity simulation scripts
+- `docs/` – project overview and technical documentation
