@@ -1,3 +1,6 @@
+// Handles trajectory planning and execution using ROS MoveIt service
+// Converts Unity scene targets into robot motions (pick-and-place)
+
 using System;
 using System.Collections;
 using System.Linq;
@@ -9,16 +12,17 @@ using UnityEngine;
 
 public class TrajectoryPlanner : MonoBehaviour
 {
-    // Hardcoded variables
+    // Number of robot joints and timing parameters for smooth execution
     const int k_NumRobotJoints = 6;
     const float k_JointAssignmentWait = 0.1f;
     const float k_PoseAssignmentWait = 0.5f;
 
-    // Variables required for ROS communication
+    // ROS service configuration
     [SerializeField]
     string m_RosServiceName = "niryo_moveit";
     public string RosServiceName { get => m_RosServiceName; set => m_RosServiceName = value; }
 
+    // References to Unity scene objects
     [SerializeField]
     GameObject m_NiryoOne;
     public GameObject NiryoOne { get => m_NiryoOne; set => m_NiryoOne = value; }
@@ -29,21 +33,21 @@ public class TrajectoryPlanner : MonoBehaviour
     GameObject m_TargetPlacement;
     public GameObject TargetPlacement { get => m_TargetPlacement; set => m_TargetPlacement = value; }
 
-    // Assures that the gripper is always positioned above the m_Target cube before grasping.
+    // Ensures the gripper approaches the object from above
     readonly Quaternion m_PickOrientation = Quaternion.Euler(90, 90, 0);
     readonly Vector3 m_PickPoseOffset = Vector3.up * 0.1f;
 
-    // Articulation Bodies
+    // Robot joint and gripper components
     ArticulationBody[] m_JointArticulationBodies;
     ArticulationBody m_LeftGripper;
     ArticulationBody m_RightGripper;
 
-    // ROS Connector
+    // ROS connection handler
     ROSConnection m_Ros;
 
     /// <summary>
-    ///     Find all robot joints in Awake() and add them to the jointArticulationBodies array.
-    ///     Find left and right finger joints and assign them to their respective articulation body objects.
+    /// Initializes ROS connection, registers service, and retrieves robot joint references.
+    /// Also locates the gripper components in the robot hierarchy.
     /// </summary>
     void Start()
     {
@@ -60,7 +64,7 @@ public class TrajectoryPlanner : MonoBehaviour
             m_JointArticulationBodies[i] = m_NiryoOne.transform.Find(linkName).GetComponent<ArticulationBody>();
         }
 
-        // Find left and right fingers
+        // Locate gripper fingers in the robot hierarchy
         var rightGripper = linkName + "/tool_link/gripper_base/servo_head/control_rod_right/right_gripper";
         var leftGripper = linkName + "/tool_link/gripper_base/servo_head/control_rod_left/left_gripper";
 
@@ -69,7 +73,7 @@ public class TrajectoryPlanner : MonoBehaviour
     }
 
     /// <summary>
-    ///     Close the gripper
+    /// Closes the robot gripper by adjusting joint targets.
     /// </summary>
     void CloseGripper()
     {
@@ -82,9 +86,9 @@ public class TrajectoryPlanner : MonoBehaviour
         m_LeftGripper.xDrive = leftDrive;
         m_RightGripper.xDrive = rightDrive;
     }
-
+    
     /// <summary>
-    ///     Open the gripper
+    /// Opens the robot gripper.
     /// </summary>
     void OpenGripper()
     {
@@ -97,11 +101,10 @@ public class TrajectoryPlanner : MonoBehaviour
         m_LeftGripper.xDrive = leftDrive;
         m_RightGripper.xDrive = rightDrive;
     }
-
+    
     /// <summary>
-    ///     Get the current values of the robot's joint angles.
+    /// Retrieves the current joint configuration of the robot.
     /// </summary>
-    /// <returns>NiryoMoveitJoints</returns>
     NiryoMoveitJointsMsg CurrentJointConfig()
     {
         var joints = new NiryoMoveitJointsMsg();
@@ -113,19 +116,17 @@ public class TrajectoryPlanner : MonoBehaviour
 
         return joints;
     }
-
+    
     /// <summary>
-    ///     Create a new MoverServiceRequest with the current values of the robot's joint angles,
-    ///     the target cube's current position and rotation, and the targetPlacement position and rotation.
-    ///     Call the MoverService using the ROSConnection and if a trajectory is successfully planned,
-    ///     execute the trajectories in a coroutine.
+    /// Sends a trajectory planning request to ROS MoveIt service.
+    /// Defines pick and place poses based on Unity scene objects.
     /// </summary>
     public void PublishJoints()
     {
         var request = new MoverServiceRequest();
         request.joints_input = CurrentJointConfig();
 
-        // Pick Pose
+        // Define pick pose (above the target object)
         request.pick_pose = new PoseMsg
         {
             position = (m_Target.transform.position + m_PickPoseOffset).To<FLU>(),
@@ -134,7 +135,7 @@ public class TrajectoryPlanner : MonoBehaviour
             orientation = Quaternion.Euler(90, m_Target.transform.eulerAngles.y, 0).To<FLU>()
         };
 
-        // Place Pose
+        // Define place pose (target placement location)
         request.place_pose = new PoseMsg
         {
             position = (m_TargetPlacement.transform.position + m_PickPoseOffset).To<FLU>(),
@@ -143,7 +144,10 @@ public class TrajectoryPlanner : MonoBehaviour
 
         m_Ros.SendServiceMessage<MoverServiceResponse>(m_RosServiceName, request, TrajectoryResponse);
     }
-
+    
+    /// <summary>
+    /// Callback function that processes the trajectory response from ROS.
+    /// </summary>
     void TrajectoryResponse(MoverServiceResponse response)
     {
         if (response.trajectories.Length > 0)
@@ -158,16 +162,9 @@ public class TrajectoryPlanner : MonoBehaviour
     }
 
     /// <summary>
-    ///     Execute the returned trajectories from the MoverService.
-    ///     The expectation is that the MoverService will return four trajectory plans,
-    ///     PreGrasp, Grasp, PickUp, and Place,
-    ///     where each plan is an array of robot poses. A robot pose is the joint angle values
-    ///     of the six robot joints.
-    ///     Executing a single trajectory will iterate through every robot pose in the array while updating the
-    ///     joint values on the robot.
+    /// Executes the planned trajectories step-by-step on the robot.
+    /// Includes PreGrasp, Grasp, PickUp, and Place phases.
     /// </summary>
-    /// <param name="response"> MoverServiceResponse received from niryo_moveit mover service running in ROS</param>
-    /// <returns></returns>
     IEnumerator ExecuteTrajectories(MoverServiceResponse response)
     {
         if (response.trajectories != null)
@@ -181,7 +178,7 @@ public class TrajectoryPlanner : MonoBehaviour
                     var jointPositions = t.positions;
                     var result = jointPositions.Select(r => (float)r * Mathf.Rad2Deg).ToArray();
 
-                    // Set the joint values for every joint
+                    // Apply joint angles to the robot
                     for (var joint = 0; joint < m_JointArticulationBodies.Length; joint++)
                     {
                         var joint1XDrive = m_JointArticulationBodies[joint].xDrive;
@@ -193,7 +190,7 @@ public class TrajectoryPlanner : MonoBehaviour
                     yield return new WaitForSeconds(k_JointAssignmentWait);
                 }
 
-                // Close the gripper if completed executing the trajectory for the Grasp pose
+                // Close gripper after grasp phase
                 if (poseIndex == (int)Poses.Grasp)
                 {
                     CloseGripper();
@@ -203,11 +200,13 @@ public class TrajectoryPlanner : MonoBehaviour
                 yield return new WaitForSeconds(k_PoseAssignmentWait);
             }
 
-            // All trajectories have been executed, open the gripper to place the target cube
+            // Open gripper after placing the object
             OpenGripper();
         }
     }
 
+
+    // Trajectory phases
     enum Poses
     {
         PreGrasp,
