@@ -11,3 +11,15 @@ EMG-based gesture recognition project using Python, TensorFlow, ROS, and Unity f
 - **pandas 1.4.2** – Handling CSV datasets and tabular data  
 - **scikit-learn 1.1.0** – Train/test split and evaluation metrics  
 - **matplotlib 3.5.1** – Visualization of training results (accuracy, loss)
+
+## System Architecture
+
+The project follows a complete AI pipeline:
+
+1. EMG signal acquisition  
+2. Signal preprocessing and normalization  
+3. Feature extraction (RMS, MAV, etc.)  
+4. LSTM-based gesture classification  
+5. Real-time prediction using Python  
+6. Communication with ROS nodes  
+7. Execution of actions in Unity simulation (Niryo One robot)
